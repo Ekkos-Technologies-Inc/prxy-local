@@ -60,17 +60,19 @@ There's also a `Makefile` if you prefer `make up` / `make down` / `make logs`.
 
 ## What you get
 
-- **Multi-provider** — Anthropic + OpenAI today. Google + Groq stubs await
-  contributors.
+- **Multi-provider** — Anthropic + OpenAI + Google (Gemini) + Groq, all wire-compatible through one canonical request shape.
+- **Smart routing** — `router` module picks the cheapest model that fits your budget, or learns from outcomes (q-learning) which model handles each query type best.
 - **MCP optimization** — embed-and-prune tools by relevance. Cuts the
   67k-tokens-of-MCP-tools problem to whatever's actually needed.
-- **Semantic + exact caching** — sha256 hash for identical requests, vector
-  similarity for near-duplicates.
+- **Semantic + exact + tool-result caching** — sha256 hash for identical requests, vector
+  similarity for near-duplicates, observation-mode caching for MCP tool calls.
 - **Pattern learning** — Golden Loop. Forges patterns from `the issue was X /
   fix is Y` markers and injects relevant ones into future requests.
 - **Inter-Prompt Compression** — older messages get summarized once you cross
   a context utilization threshold. Keeps long conversations going.
+- **Prompt-cache optimization** — `prompt-optimizer` stamps Anthropic `cache_control` markers and orders tools deterministically so the prefix cache eats your static prompt.
 - **Cost guards** — hard USD caps per request / per day / per month.
+- **Guardrails** — regex PII redaction (email/SSN/card/phone), profanity blocks, custom block patterns.
 - **Air-gap mode** — block all outbound network calls except to your provider.
 
 See [docs/modules.md](docs/modules.md) for the full module catalog and
@@ -156,8 +158,8 @@ Same modules, same pipeline shape, different storage backend.
 ## Contributing
 
 Issues and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-The OpenAI provider client is a good reference shape if you want to add the
-Google or Groq client.
+The OpenAI / Anthropic / Google / Groq provider clients are reference shapes
+if you want to add another provider.
 
 ## Documentation
 

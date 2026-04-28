@@ -1,28 +1,42 @@
 /**
- * Groq provider client — STUB.
+ * Groq provider client.
  *
- * TODO: Implement using `groq-sdk` (OpenAI-compatible Chat Completions surface).
- * Largely mirrors the OpenAI client. Contributions welcome — see CONTRIBUTING.md.
+ * Groq's API surface is OpenAI-compatible (same Chat Completions shape, same
+ * tool-calling format). We delegate the canonical ↔ OpenAI translation to the
+ * shared OpenAI translator and ship the translated payload through the
+ * `groq-sdk` client.
  */
 
+import Groq from 'groq-sdk';
 import type {
   CanonicalChunk,
   CanonicalRequest,
   CanonicalResponse,
 } from '../types/canonical.js';
 
+import { canonicalToOpenAI, openaiResponseToCanonical, openaiStreamToCanonical } from './openai.js';
 import type { ProviderClient } from './types.js';
 
 export const groqClient: ProviderClient = {
-  async complete(_req: CanonicalRequest, _apiKey: string): Promise<CanonicalResponse> {
-    throw new Error(
-      'Groq provider not implemented yet. Contributions welcome — see CONTRIBUTING.md.',
-    );
+  async complete(req: CanonicalRequest, apiKey: string): Promise<CanonicalResponse> {
+    const client = makeClient(apiKey);
+    const params = canonicalToOpenAI(req, false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const completion = await client.chat.completions.create(params as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return openaiResponseToCanonical(completion as any);
   },
 
-  async *stream(_req: CanonicalRequest, _apiKey: string): AsyncIterable<CanonicalChunk> {
-    throw new Error(
-      'Groq provider not implemented yet. Contributions welcome — see CONTRIBUTING.md.',
-    );
+  async *stream(req: CanonicalRequest, apiKey: string): AsyncIterable<CanonicalChunk> {
+    const client = makeClient(apiKey);
+    const params = canonicalToOpenAI(req, true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stream = await client.chat.completions.create(params as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    yield* openaiStreamToCanonical(stream as any);
   },
 };
+
+function makeClient(apiKey: string): Groq {
+  return new Groq({ apiKey });
+}

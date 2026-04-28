@@ -1,8 +1,7 @@
 /**
  * Provider client registry — translate canonical request/response <-> provider-specific.
  *
- * Anthropic + OpenAI ship implemented. Google + Groq are stubs awaiting
- * contributors.
+ * v0.2.0: Anthropic + OpenAI + Google (Gemini) + Groq all implemented.
  */
 
 import type { Provider } from '../types/canonical.js';
@@ -29,7 +28,12 @@ export {
   openaiStreamToCanonical,
 } from './openai.js';
 
-export { googleClient } from './google.js';
+export {
+  googleClient,
+  canonicalToGoogle,
+  googleResponseToCanonical,
+  googleStreamToCanonical,
+} from './google.js';
 export { groqClient } from './groq.js';
 
 export const providerClients: Record<Provider, ProviderClient> = {

@@ -4,6 +4,54 @@ All notable changes to prxy-local will be documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-04-27
+
+Multi-provider promise made good. Two new provider clients ship implemented (no
+more "PRs welcome" stub-throwing), and four modules graduate from the v1.1
+roadmap into v1.0 production.
+
+### Added
+
+- **Google (Gemini) provider client** via `@google/genai` (the unified post-2024 SDK):
+  - Full canonical ↔ Gemini translation: `contents[]`/`role: 'model'`, `systemInstruction`, `functionDeclarations`, `functionCall`/`functionResponse` parts, `inlineData` for base64 images.
+  - Streaming via `generateContentStream` — Gemini's full-response chunks are diffed into Anthropic-style `content_block_*` events so modules see the same shape across providers.
+  - Token usage from `usageMetadata.{promptTokenCount, candidatesTokenCount}`, including `cachedContentTokenCount` propagated as `cacheReadInputTokens`.
+- **Groq provider client** via `groq-sdk`:
+  - Delegates canonical translation to the OpenAI translator (Groq's API surface is OpenAI-compatible).
+  - Routes `llama-*`, `mixtral-*`, and `groq/*` model names automatically via `detectProvider()`.
+- **`router` module** (3 strategies):
+  - `cheapest-first` (default) — sort candidates by per-token price, pick cheapest under `budget_per_request`.
+  - `fallback` — pick the first model in the chain.
+  - `q-learning` — track per-(query bucket, model) success rates in KV; pick the best for the bucket; cold start falls back to cheapest-first.
+- **`prompt-optimizer` module**:
+  - Sorts the `tools` array alphabetically for stable cache prefix bytes.
+  - In `auto` mode, stamps `cache_control: { type: 'ephemeral' }` on the LAST system block — the Anthropic prefix cache then covers the whole static prefix.
+- **`tool-cache` module** (observation-mode v1):
+  - POST hook records every `tool_use → tool_result` pair under `(name, sha256(input))` keys with TTL.
+  - PRE hook detects when a future request would hit cache and reports it via `tool-cache.would_hit_count`.
+  - 13 side-effecting tools (`shell_exec`, `send_email`, `write_file`, etc.) are NEVER cached; user-extendable.
+  - **Limitation:** does not yet rewrite requests to inject cached results — that's v1.1 work, blocked on IPC archive integration.
+- **`guardrails` module** (regex backend):
+  - PII redaction for emails, US SSNs, 16-digit credit cards, North-American phone numbers.
+  - Profanity block (small built-in list, extend via `custom_patterns`).
+  - User-supplied regex patterns (case-insensitive, invalid patterns silently dropped).
+  - `on_pii: 'redact' | 'block' | 'log-only'` — pick your behavior.
+- 60+ new tests covering the new providers and modules. Total test count: 116 (up from 60).
+
+### Changed
+
+- Module catalog: 11 modules total (was 7 in v0.1.0).
+- `BUILTIN_MODULES` registry expanded with `router`, `prompt-optimizer`, `tool-cache`, `guardrails`.
+- `docs/modules.md` rewritten with config + behavior for each new module.
+- `.env.example` notes provider key formats and gives a model→provider routing cheat-sheet.
+
+### Roadmap (still v1.1)
+
+- `rehydrator` — pull archived context back into a session on trigger phrases.
+- `compaction-bridge` — preserve critical state across Claude Code's auto-compaction.
+
+Both need IPC archive integration that's still in flight; deferring keeps v0.2.0 ship-able.
+
 ## [0.1.0] — 2026-04-27
 
 ### Initial public release
@@ -62,4 +110,4 @@ stripped out, and a new `airgap` module added.
   release will publish it to npm so prxy-local and the cloud edition can
   share the contract.
 - Google + Groq provider clients are stubs that throw. PRs welcome — the
-  OpenAI client is a good reference shape.
+  OpenAI client is a good reference shape. (**Implemented in v0.2.0.**)
