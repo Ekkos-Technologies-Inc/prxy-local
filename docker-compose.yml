@@ -1,0 +1,26 @@
+# Convenience compose file for local development.
+# `docker compose up` will build the image and start the gateway with a named
+# volume for persistent data. Provider keys come from a sibling `.env` file —
+# copy `.env.example` to `.env` and fill in the providers you use.
+
+services:
+  prxy-local:
+    build: .
+    image: prxymonster/local:dev
+    container_name: prxy-local
+    restart: unless-stopped
+    ports:
+      - "3099:3099"
+    env_file:
+      - .env
+    volumes:
+      - prxy-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3099/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  prxy-data:

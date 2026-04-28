@@ -1,18 +1,23 @@
 # prxy-local
 
 > The open-source local edition of [prxy.monster](https://prxy.monster).
-> Run a composable AI gateway on your own hardware. Zero data leaves your machine.
+> A composable AI gateway you run on your own hardware. Zero data leaves your machine.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/Ekkos-Technologies-Inc/prxy-local/actions/workflows/ci.yml/badge.svg)](https://github.com/Ekkos-Technologies-Inc/prxy-local/actions/workflows/ci.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/prxymonster/local)](https://hub.docker.com/r/prxymonster/local)
 
 ---
 
 ## What this is
 
-A Docker image you run locally to put a smart middleware layer in front of your LLM API calls. Same module system as cloud `prxy.monster`, but everything runs on your machine — SQLite, in-memory cache, local filesystem. Nothing ever phones home.
+A standalone Node.js service you run locally. It puts a smart middleware layer
+in front of your LLM API calls — caching, MCP tool pruning, pattern memory,
+cost guards, optional air-gap. Same module shape as cloud `prxy.monster`, but
+everything runs on your machine: SQLite, in-memory cache, local filesystem.
+Nothing ever phones home.
 
-## Quick start
+## Quick start — Docker
 
 ```bash
 docker run -p 3099:3099 -v ~/.prxy:/data \
@@ -20,44 +25,120 @@ docker run -p 3099:3099 -v ~/.prxy:/data \
   prxymonster/local
 ```
 
-Then in your app:
+Point your app at it:
 
 ```bash
 export ANTHROPIC_BASE_URL=http://localhost:3099
 export ANTHROPIC_API_KEY=sk-ant-xxx   # your real Anthropic key
 ```
 
-That's it. Your LLM calls now route through prxy-local.
+Done. Your LLM calls now route through prxy-local.
+
+## Quick start — from source
+
+```bash
+git clone https://github.com/Ekkos-Technologies-Inc/prxy-local
+cd prxy-local
+cp .env.example .env                  # edit and add your provider keys
+npm install
+npm run build
+npm test
+npm start
+```
+
+The gateway listens on `http://localhost:3099` by default.
+
+## Quick start — docker compose
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose logs -f
+```
+
+There's also a `Makefile` if you prefer `make up` / `make down` / `make logs`.
 
 ## What you get
 
-- **Infinite context** — messages compressed by age, never deleted
-- **MCP optimization** — cuts tool overhead 90%
-- **Semantic + exact caching** — repeated queries answered instantly
-- **Pattern learning** — Golden Loop, learns from successful conversations
-- **Cost guards** — hard budget limits per request/day
-- **Multi-provider** — Anthropic, OpenAI, Google, Groq via one key
+- **Multi-provider** — Anthropic + OpenAI today. Google + Groq stubs await
+  contributors.
+- **MCP optimization** — embed-and-prune tools by relevance. Cuts the
+  67k-tokens-of-MCP-tools problem to whatever's actually needed.
+- **Semantic + exact caching** — sha256 hash for identical requests, vector
+  similarity for near-duplicates.
+- **Pattern learning** — Golden Loop. Forges patterns from `the issue was X /
+  fix is Y` markers and injects relevant ones into future requests.
+- **Inter-Prompt Compression** — older messages get summarized once you cross
+  a context utilization threshold. Keeps long conversations going.
+- **Cost guards** — hard USD caps per request / per day / per month.
+- **Air-gap mode** — block all outbound network calls except to your provider.
+
+See [docs/modules.md](docs/modules.md) for the full module catalog and
+[docs/pipelines.md](docs/pipelines.md) for ready-made pipeline recipes.
 
 ## Where data lives
 
 ```
-~/.prxy/
-├── prxy.db          ← SQLite (patterns, cache, sessions)
-├── evictions/       ← compressed conversation archives
-└── config.yaml      ← optional pipeline config
+$PRXY_DATA_DIR/                # default: ./data (or /data inside Docker)
+├── prxy.db                    # SQLite — patterns, semantic_cache, sessions
+├── prxy.db-wal                # SQLite WAL
+├── blobs/                     # filesystem blob store
+└── evictions/                 # IPC archived conversation tails
 ```
 
 Nothing else. No telemetry. No phone-home. Audit the source.
 
-## Privacy modes
+## Authentication
 
-Add `airgap` to enforce zero outbound network calls (except to your chosen LLM provider):
+prxy-local is single-user / single-machine by default. Two modes:
+
+- **Open** (default): `LOCAL_API_KEY` is unset. Any caller can hit the gateway.
+- **Bearer**: set `LOCAL_API_KEY=prxy_local_choose_a_long_random_string`.
+  Requests must send `Authorization: Bearer <that-key>`.
+
+The cloud edition's signup / Argon2 / DB-backed auth flow doesn't ship here —
+that's a multi-tenant feature.
+
+## Configuration
+
+Every knob is an env var. Copy [`.env.example`](.env.example) to `.env` and
+fill in what you need. Highlights:
+
+- `PORT`, `HOST` — listening
+- `LOCAL_API_KEY` — optional Bearer auth
+- `PRXY_DATA_DIR` — where SQLite lives
+- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GROQ_API_KEY`
+- `VOYAGE_API_KEY` (optional) — better embeddings than the offline stub
+- `PRXY_PIPE` — comma-separated module list (or `PRXY_PIPE_FILE` for YAML)
+
+## Pipeline recipes
 
 ```bash
-docker run -e PRXY_PIPE=airgap,ipc,patterns,semantic-cache prxymonster/local
+# Privacy-first: block all outbound except provider
+PRXY_PIPE=airgap,ipc,patterns,semantic-cache
+
+# Cost-first: hard budgets + cache identical requests
+PRXY_PIPE=cost-guard,exact-cache,mcp-optimizer,patterns
+
+# Default: smart context + cache + memory
+PRXY_PIPE=mcp-optimizer,semantic-cache,patterns
 ```
 
-## When to use cloud vs local
+Per-request override via `x-prxy-pipe` header. Full list in
+[docs/pipelines.md](docs/pipelines.md).
+
+## CLI
+
+```bash
+npm run prxy -- patterns list           # show learned patterns
+npm run prxy -- patterns clear          # delete all patterns
+npm run prxy -- cache clear             # wipe semantic_cache
+npm run prxy -- export --out backup.json
+npm run prxy -- import backup.json
+npm run prxy -- migrate                 # apply pending SQL migrations
+```
+
+## Cloud vs local
 
 | | Cloud (prxy.monster) | Local (this repo) |
 |---|---|---|
@@ -66,25 +147,24 @@ docker run -e PRXY_PIPE=airgap,ipc,patterns,semantic-cache prxymonster/local
 | Cross-device sync | Yes | No |
 | Collective patterns | Yes | No |
 | Air-gap capable | No | Yes |
-| Price | Free → $20+/mo | Free, forever |
+| Billing / Stripe | Yes | None — no payment surface |
+| Dashboard UI | Yes | None — REST + logs only |
+| Price | Free → $20+/mo | Free, forever (MIT) |
 
-Same modules. Same pipeline. Different storage backend.
-
-## Documentation
-
-- Full docs: [docs.prxy.monster](https://docs.prxy.monster)
-- Local-mode specifics: [docs.prxy.monster/local](https://docs.prxy.monster/local)
-- Module catalog: [docs.prxy.monster/modules](https://docs.prxy.monster/modules)
+Same modules, same pipeline shape, different storage backend.
 
 ## Contributing
 
 Issues and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+The OpenAI provider client is a good reference shape if you want to add the
+Google or Groq client.
 
-## Relationship to prxy.monster
+## Documentation
 
-prxy.monster is the commercial cloud version (closed source). This repo is the open-source local edition that uses the same module system. The `@prxy/module-sdk` package is shared between both (published to npm under MIT license).
-
-If you build a module here, it works on the cloud version too — and vice versa.
+- Module catalog → [docs/modules.md](docs/modules.md)
+- Pipeline recipes → [docs/pipelines.md](docs/pipelines.md)
+- airgap privacy model → [docs/airgap.md](docs/airgap.md)
+- Cloud + local site → [docs.prxy.monster](https://docs.prxy.monster)
 
 ## License
 
