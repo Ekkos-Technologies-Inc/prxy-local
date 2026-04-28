@@ -1,8 +1,9 @@
 /**
  * Built-in modules shipped with prxy-local.
  *
- * v0.2.0 ships 11 modules: airgap, cost-guard, exact-cache, ipc, mcp-optimizer,
- * patterns, semantic-cache, router, prompt-optimizer, tool-cache, guardrails.
+ * v0.4.0 ships 13 modules: airgap, cost-guard, exact-cache, ipc, mcp-optimizer,
+ * patterns, semantic-cache, router, prompt-optimizer, tool-cache, guardrails,
+ * rehydrator, compaction-bridge.
  *
  * Modules are exported two ways:
  *   - Named factory functions (preferred for direct imports + custom config)
@@ -13,6 +14,7 @@
 import type { Module } from '../types/sdk.js';
 
 import { airgap, type AirgapConfig } from './airgap.js';
+import { compactionBridge, type CompactionBridgeConfig } from './compaction-bridge.js';
 import { costGuard, type CostGuardConfig } from './cost-guard.js';
 import { exactCache, type ExactCacheConfig } from './exact-cache.js';
 import { guardrails, type GuardrailsConfig, type GuardrailBackend } from './guardrails.js';
@@ -24,12 +26,14 @@ import {
   type PromptOptimizerConfig,
   type CacheControlMode,
 } from './prompt-optimizer.js';
+import { rehydrator, type RehydratorConfig } from './rehydrator.js';
 import { router, type RouterConfig, type RouterStrategy } from './router.js';
 import { semanticCache, type SemanticCacheConfig } from './semantic-cache.js';
 import { toolCache, type ToolCacheConfig } from './tool-cache.js';
 
 export {
   airgap,
+  compactionBridge,
   costGuard,
   exactCache,
   guardrails,
@@ -37,6 +41,7 @@ export {
   mcpOptimizer,
   patterns,
   promptOptimizer,
+  rehydrator,
   router,
   semanticCache,
   toolCache,
@@ -44,6 +49,7 @@ export {
 
 export type {
   AirgapConfig,
+  CompactionBridgeConfig,
   CostGuardConfig,
   ExactCacheConfig,
   GuardrailBackend,
@@ -53,6 +59,7 @@ export type {
   CacheControlMode,
   PatternsConfig,
   PromptOptimizerConfig,
+  RehydratorConfig,
   RouterConfig,
   RouterStrategy,
   SemanticCacheConfig,
@@ -63,6 +70,7 @@ export type {
 export { compressMessages } from './ipc.js';
 export { detectPatternFromConversation } from './patterns.js';
 export { isAirgapInstalled, _uninstallAirgap } from './airgap.js';
+export { scoreCompaction } from './compaction-bridge.js';
 
 export type ModuleFactory = (config?: Record<string, unknown>) => Module;
 
@@ -76,6 +84,8 @@ export type ModuleFactory = (config?: Record<string, unknown>) => Module;
  */
 export const BUILTIN_MODULES: Record<string, ModuleFactory> = {
   airgap: (cfg) => airgap(cfg as AirgapConfig | undefined),
+  'compaction-bridge': (cfg) =>
+    compactionBridge(cfg as CompactionBridgeConfig | undefined),
   'cost-guard': (cfg) => costGuard(cfg as CostGuardConfig | undefined),
   'exact-cache': (cfg) => exactCache(cfg as ExactCacheConfig | undefined),
   guardrails: (cfg) => guardrails(cfg as GuardrailsConfig | undefined),
@@ -83,6 +93,7 @@ export const BUILTIN_MODULES: Record<string, ModuleFactory> = {
   'mcp-optimizer': (cfg) => mcpOptimizer(cfg as McpOptimizerConfig | undefined),
   patterns: (cfg) => patterns(cfg as PatternsConfig | undefined),
   'prompt-optimizer': (cfg) => promptOptimizer(cfg as PromptOptimizerConfig | undefined),
+  rehydrator: (cfg) => rehydrator(cfg as RehydratorConfig | undefined),
   router: (cfg) => router(cfg as RouterConfig | undefined),
   'semantic-cache': (cfg) => semanticCache(cfg as SemanticCacheConfig | undefined),
   'tool-cache': (cfg) => toolCache(cfg as ToolCacheConfig | undefined),

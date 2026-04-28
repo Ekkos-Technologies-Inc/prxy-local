@@ -4,6 +4,52 @@ All notable changes to prxy-local will be documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-04-27
+
+The final two "Coming v1.1" modules promoted from the cloud monorepo. Module
+catalog now: 13 modules (12 from cloud + the local-only `airgap`). All v1.0
+production. No more "coming soon" anywhere.
+
+### Added
+
+- **`rehydrator` module** — pulls archived turns back when the user references
+  them. Scans `evictions/{user_id}/*` blobs (the same archive ipc writes),
+  embeds each turn, picks the top N above a similarity threshold, re-injects
+  them as a `<rehydrated-context>` block in the system prompt. Triggers on
+  phrases like "remember when…", "earlier we…", "previously…", "we discussed…".
+  Configurable via `triggerPhrases`, `maxRehydrated`, `searchDepthDays`,
+  `similarityThreshold`. **No-op when no eviction archives exist** (i.e. when
+  `ipc` isn't in the pipeline) — never throws.
+- **`compaction-bridge` module** — survives Claude Code's auto-compaction.
+  Detects fresh-looking requests that reference prior work (≤2 messages,
+  continuation markers, file path references) and re-injects the most recent
+  eviction archive: last N turns, active files, recent decisions, surviving
+  directives. Detection uses a weighted-sum heuristic with a configurable
+  `detectionThreshold` (0.6 by default — conservative on purpose). Same no-op
+  guarantee as rehydrator when no archives exist.
+- 22 new tests (13 rehydrator + 13 compaction-bridge including `scoreCompaction`
+  edge cases). Total test count now 154 (was 132).
+
+### Changed
+
+- `BUILTIN_MODULES` registry now includes `rehydrator` and `compaction-bridge`.
+- `docs/modules.md` lists 13 modules; both new ones documented with full
+  config reference and dependency notes.
+- `README.md` adds a "Context rehydration" bullet under "What you get".
+
+### Migration
+
+Both modules are additive — existing pipelines continue to work unchanged. To
+opt in, add them to your `PRXY_PIPE`:
+
+```bash
+PRXY_PIPE=ipc,rehydrator,compaction-bridge,patterns,semantic-cache
+```
+
+Both modules read from `ipc`'s eviction archives, so put them after `ipc`. They
+each set distinct `metadata` keys (`rehydrator.*`, `compaction-bridge.*`) so
+they don't conflict with `patterns.*`.
+
 ## [0.3.0] — 2026-04-27
 
 AWS support lands. Fifth provider, alternative blob backend for cloud-hosted

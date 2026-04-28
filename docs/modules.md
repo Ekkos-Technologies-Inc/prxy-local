@@ -1,6 +1,6 @@
 # Modules
 
-prxy-local v0.3.0 ships **eleven built-in modules** and **five providers**
+prxy-local v0.4.0 ships **thirteen built-in modules** and **five providers**
 (Anthropic, OpenAI, Google, Groq, AWS Bedrock). The modules are composable
 middleware around the LLM provider call: `pre()` runs before, can short-circuit
 the pipeline (cache hit, budget block); `post()` runs after, fire-and-forget
@@ -34,6 +34,8 @@ names, in order) or per-request with the `x-prxy-pipe` header.
 | `prompt-optimizer` | pre | Restructures the request to maximize Anthropic prefix-cache hits. Sorts tools, stamps `cache_control` on the static prefix. |
 | `tool-cache` | pre + post | Observes MCP `tool_use → tool_result` pairs, records them, detects would-be cache hits. v1 = observation; v1.1 = injection. |
 | `guardrails` | pre | Regex content filtering: PII redaction (email/SSN/card/phone), profanity blocks, custom patterns. |
+| `rehydrator` | pre | Pulls archived context back when the user says "remember when…", "earlier we…", etc. Reads from `ipc`'s eviction blobs. No-op when no archives exist. |
+| `compaction-bridge` | pre | Detects post-compaction continuation requests (Claude Code auto-compacts, sends what looks like a fresh conversation) and re-injects the most recent eviction archive. No-op when no archives exist. |
 
 The default pipeline (when nothing else is configured) is:
 
@@ -177,6 +179,57 @@ strings are silently dropped (won't crash the module).
 
 v1.1 will add a `'callout'` backend for NIM / Anthropic Constitutional / OpenAI
 Moderation.
+
+## rehydrator
+
+Pull archived context back when the user explicitly references it.
+
+```yaml
+- module: rehydrator
+  config:
+    triggerPhrases: ['remember', 'earlier', 'previously', 'before', 'last time', 'we discussed', 'we were']
+    maxRehydrated: 5
+    searchDepthDays: 90
+    similarityThreshold: 0.7
+    blobPrefix: 'evictions'
+    maxBlobsScanned: 50
+```
+
+Companion to `ipc`. When `ipc` compresses older turns into an archive, rehydrator can pull individual turns back when the user references them ("remember when we talked about caching?"). Searches `evictions/{user_id}/*` blobs, embeds each turn, picks the top N above the similarity threshold, re-injects them as a `<rehydrated-context>` block in the system prompt.
+
+**Dependency on ipc:** if ipc isn't in the pipeline (or hasn't archived anything), rehydrator is a clean no-op. No errors. No latency. Just nothing.
+
+Metadata emitted: `rehydrator.matched`, `rehydrator.trigger`, `rehydrator.scanned_blobs`, `rehydrator.scores`.
+
+## compaction-bridge
+
+Survive Claude Code's auto-compaction.
+
+```yaml
+- module: compaction-bridge
+  config:
+    preserveLastTurns: 5
+    preserveActiveFiles: true
+    preserveDirectives: true
+    detectionThreshold: 0.6
+    blobPrefix: 'evictions'
+```
+
+Detects when an upstream client (Claude Code, Cursor, etc.) has just triggered its own context-compaction — the request looks fresh but references prior work. Reads the most recent eviction archive and re-injects: the last N turns, file paths mentioned, decisions made (`the fix is`, `we decided`), and surviving directives (`always`, `never`, `prefer`).
+
+**Detection signals:**
+
+| Signal | Weight |
+|---|---|
+| ≤ 2 messages in the request | +0.4 |
+| User content contains a continuation marker (`continuing from where we left off`, etc.) | +0.5 |
+| Short system prompt + references to prior work (file paths, "the fix", etc.) | +0.3 |
+
+Default threshold is 0.6 — conservative on purpose. False positives inject stale context (recoverable); false negatives miss a recovery opportunity (the safer default).
+
+**Dependency on ipc:** same as rehydrator — clean no-op without archives.
+
+Metadata emitted: `compaction-bridge.recovered`, `compaction-bridge.confidence`, `compaction-bridge.source_blob`, plus per-category restoration counts.
 
 ## What's NOT here
 

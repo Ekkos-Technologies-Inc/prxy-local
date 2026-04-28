@@ -70,6 +70,7 @@ There's also a `Makefile` if you prefer `make up` / `make down` / `make logs`.
   fix is Y` markers and injects relevant ones into future requests.
 - **Inter-Prompt Compression** — older messages get summarized once you cross
   a context utilization threshold. Keeps long conversations going.
+- **Context rehydration** — `rehydrator` pulls archived turns back when the user says "remember when…", "earlier we…", "go back to…". `compaction-bridge` survives Claude Code's auto-compaction by detecting fresh-looking requests that reference prior work and re-injecting the recent state.
 - **Prompt-cache optimization** — `prompt-optimizer` stamps Anthropic `cache_control` markers and orders tools deterministically so the prefix cache eats your static prompt.
 - **Cost guards** — hard USD caps per request / per day / per month.
 - **Guardrails** — regex PII redaction (email/SSN/card/phone), profanity blocks, custom block patterns.
