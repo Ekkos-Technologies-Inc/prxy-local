@@ -1,12 +1,14 @@
 /**
  * Provider client registry — translate canonical request/response <-> provider-specific.
  *
- * v0.2.0: Anthropic + OpenAI + Google (Gemini) + Groq all implemented.
+ * v0.3.0: Anthropic + OpenAI + Google (Gemini) + Groq + AWS Bedrock all
+ * implemented.
  */
 
 import type { Provider } from '../types/canonical.js';
 
 import { anthropicClient } from './anthropic.js';
+import { bedrockClient } from './bedrock.js';
 import { googleClient } from './google.js';
 import { groqClient } from './groq.js';
 import { openaiClient } from './openai.js';
@@ -36,11 +38,20 @@ export {
 } from './google.js';
 export { groqClient } from './groq.js';
 
+export {
+  bedrockClient,
+  canonicalToBedrock,
+  bedrockResponseToCanonical,
+  bedrockStreamToCanonical,
+  encodeBedrockCredentials,
+} from './bedrock.js';
+
 export const providerClients: Record<Provider, ProviderClient> = {
   anthropic: anthropicClient,
   openai: openaiClient,
   google: googleClient,
   groq: groqClient,
+  bedrock: bedrockClient,
 };
 
 export function getProviderClient(provider: Provider): ProviderClient {
@@ -50,6 +61,9 @@ export function getProviderClient(provider: Provider): ProviderClient {
 }
 
 export function detectProvider(model: string): Provider {
+  // Bedrock is checked first because it can host Anthropic / Meta / etc.
+  // models — the `bedrock/` prefix is the unambiguous routing signal.
+  if (model.startsWith('bedrock/')) return 'bedrock';
   if (model.startsWith('claude-')) return 'anthropic';
   if (
     model.startsWith('gpt-') ||

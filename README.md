@@ -60,7 +60,7 @@ There's also a `Makefile` if you prefer `make up` / `make down` / `make logs`.
 
 ## What you get
 
-- **Multi-provider** — Anthropic + OpenAI + Google (Gemini) + Groq, all wire-compatible through one canonical request shape.
+- **Multi-provider** — Anthropic + OpenAI + Google (Gemini) + Groq + AWS Bedrock, all wire-compatible through one canonical request shape. Bedrock unlocks Claude / Llama / Titan / Mistral / Cohere through your AWS account (uses the SDK default credential chain — IAM role on EC2/ECS/App Runner, or env vars).
 - **Smart routing** — `router` module picks the cheapest model that fits your budget, or learns from outcomes (q-learning) which model handles each query type best.
 - **MCP optimization** — embed-and-prune tools by relevance. Cuts the
   67k-tokens-of-MCP-tools problem to whatever's actually needed.
@@ -110,8 +110,10 @@ fill in what you need. Highlights:
 - `LOCAL_API_KEY` — optional Bearer auth
 - `PRXY_DATA_DIR` — where SQLite lives
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GROQ_API_KEY`
+- `AWS_REGION` (+ optional `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`) — AWS Bedrock provider; SDK default credential chain when keys are omitted
 - `VOYAGE_API_KEY` (optional) — better embeddings than the offline stub
 - `PRXY_PIPE` — comma-separated module list (or `PRXY_PIPE_FILE` for YAML)
+- `BLOB_BACKEND` — `fs` (default) or `s3`. The S3 backend is for "local-mode-on-AWS" deploys where blobs need to survive instance churn. Set `S3_BUCKET` + `AWS_REGION`; credentials via the SDK default chain.
 
 ## Pipeline recipes
 

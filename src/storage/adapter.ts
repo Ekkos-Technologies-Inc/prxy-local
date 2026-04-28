@@ -18,14 +18,17 @@ import { fileURLToPath } from 'node:url';
 
 import BetterSqlite3 from 'better-sqlite3';
 
-import type { HealthStatus, StorageAdapter } from '../types/sdk.js';
+import type { BlobStore, HealthStatus, StorageAdapter } from '../types/sdk.js';
 
 import { LocalBlob } from './blob.js';
+import { BlobS3, buildS3Client } from './blob-s3.js';
 import { LocalDb } from './db.js';
 import { LocalKv } from './kv.js';
 import { createMigrationRunner } from './migration-runner.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export type BlobBackend = 'fs' | 's3';
 
 export interface LocalAdapterOptions {
   /** Override PRXY_DATA_DIR. Defaults to env or ./data. */
@@ -34,13 +37,30 @@ export interface LocalAdapterOptions {
   migrationsDir?: string;
   /** Disable the KV cleanup timer (test ergonomics). */
   kvCleanupIntervalMs?: number;
+  /**
+   * Blob backend selector. Default: 'fs' (filesystem under <dataDir>/blobs/).
+   * Set to 's3' to store blobs in an S3 bucket instead — useful for
+   * "local-mode-on-AWS" deploys (EC2 / ECS / App Runner) where you want
+   * blobs to survive instance churn without setting up an EFS mount.
+   *
+   * Configurable via env: BLOB_BACKEND=fs|s3
+   */
+  blobBackend?: BlobBackend;
+  /** S3 bucket name. Required when blobBackend='s3'. Env: S3_BUCKET. */
+  s3Bucket?: string;
+  /** AWS region. Required when blobBackend='s3'. Env: AWS_REGION. */
+  s3Region?: string;
+  /** AWS access key. Optional — omit to use the SDK default credential chain. */
+  s3AccessKeyId?: string;
+  /** AWS secret. Optional — omit to use the SDK default credential chain. */
+  s3SecretAccessKey?: string;
 }
 
 export class LocalAdapter implements StorageAdapter {
   kind = 'local' as const;
   kv!: LocalKv;
   db!: LocalDb;
-  blob!: LocalBlob;
+  blob!: BlobStore;
 
   private sqlite: BetterSqlite3.Database | null = null;
   private dataDir!: string;
@@ -73,8 +93,31 @@ export class LocalAdapter implements StorageAdapter {
       enabled: this.vectorEnabled,
       reason: this.vectorReason,
     });
-    this.blob = new LocalBlob({ dataDir: this.dataDir });
-    await this.blob.init();
+
+    const backend = (this.opts.blobBackend
+      ?? (process.env.BLOB_BACKEND as BlobBackend | undefined)
+      ?? 'fs') satisfies BlobBackend;
+
+    if (backend === 's3') {
+      const region = this.opts.s3Region ?? process.env.AWS_REGION ?? process.env.S3_REGION;
+      const bucket = this.opts.s3Bucket ?? process.env.S3_BUCKET;
+      if (!region) {
+        throw new Error('LocalAdapter (BLOB_BACKEND=s3): AWS_REGION (or S3_REGION) is required');
+      }
+      if (!bucket) {
+        throw new Error('LocalAdapter (BLOB_BACKEND=s3): S3_BUCKET is required');
+      }
+      const client = buildS3Client({
+        region,
+        accessKeyId: this.opts.s3AccessKeyId ?? process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: this.opts.s3SecretAccessKey ?? process.env.AWS_SECRET_ACCESS_KEY,
+      });
+      this.blob = new BlobS3({ client, bucket });
+    } else {
+      const local = new LocalBlob({ dataDir: this.dataDir });
+      await local.init();
+      this.blob = local;
+    }
 
     await this.runMigrations();
   }

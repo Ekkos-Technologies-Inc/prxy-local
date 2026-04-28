@@ -4,6 +4,54 @@ All notable changes to prxy-local will be documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-04-27
+
+AWS support lands. Fifth provider, alternative blob backend for cloud-hosted
+local-mode deploys, and routing precedence updated so Bedrock-hosted models
+go to Bedrock no matter which family they belong to.
+
+### Added
+
+- **AWS Bedrock provider client** via `@aws-sdk/client-bedrock-runtime`:
+  - Uses the unified Converse API — same request shape for Claude, Llama,
+    Titan, Mistral, and Cohere models.
+  - Streaming via ConverseStream; tool-use translates to the canonical
+    `tool_use`/`tool_result` blocks.
+  - Model name format: `bedrock/<model-id>` — e.g.
+    `bedrock/anthropic.claude-sonnet-4-20250514-v1:0`,
+    `bedrock/meta.llama3-70b-instruct-v1:0`,
+    `bedrock/amazon.titan-text-express-v1`.
+  - Auth: pass an `AwsCredentials` JSON blob OR a bare region string (the
+    SDK then uses its default credential chain — env vars, shared config,
+    IAM role, IRSA). The right answer when running on EC2/ECS/App Runner
+    is an instance role; no API key to leak.
+- **S3 alternative blob backend** (`BlobS3`):
+  - Opt-in via `BLOB_BACKEND=s3` (or `LocalAdapterOptions.blobBackend = 's3'`).
+  - Stores blobs in an S3 bucket so they survive instance churn — useful
+    for "local-mode-on-AWS" deploys (EC2 / ECS / App Runner) where you
+    don't want to set up an EFS mount.
+  - Filesystem (`fs`) stays the default — a fresh `docker run` doesn't
+    require AWS credentials.
+- 16 new tests covering Bedrock translation, streaming, credential handling,
+  the S3 blob backend, and `detectProvider` precedence for `bedrock/*`.
+
+### Changed
+
+- `Provider` union extended with `'bedrock'`.
+- `detectProvider()` checks the `bedrock/` prefix first — the unambiguous
+  routing signal — before falling through to the per-family checks.
+- `LocalAdapter.blob` is now a `BlobStore` rather than a concrete `LocalBlob`,
+  to allow swapping in `BlobS3`. The default behaviour is unchanged.
+- `.env.example` documents the Bedrock + `BLOB_BACKEND=s3` knobs.
+- `docs/modules.md` adds the provider table.
+
+### Roadmap
+
+CDK self-deploy template lives in the cloud monorepo only — prxy-local users
+continue to use `docker run`. If you need a one-command AWS deploy of the
+local edition, the cloud `infra/aws-cdk/` template is a 95% drop-in (swap
+the gateway image + use `BLOB_BACKEND=s3`).
+
 ## [0.2.0] — 2026-04-27
 
 Multi-provider promise made good. Two new provider clients ship implemented (no

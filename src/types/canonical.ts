@@ -69,7 +69,22 @@ export type ContentBlockDelta =
   | { type: 'text_delta'; text: string }
   | { type: 'input_json_delta'; partialJson: string };
 
-export type Provider = 'anthropic' | 'openai' | 'google' | 'groq';
+export type Provider = 'anthropic' | 'openai' | 'google' | 'groq' | 'bedrock';
+
+/**
+ * AWS credentials used by the Bedrock provider client.
+ *
+ * If `accessKeyId`/`secretAccessKey` are omitted the AWS SDK falls back to its
+ * default credential provider chain (env vars, shared config files, IAM role,
+ * IRSA, etc.). `region` is required because Bedrock model availability is
+ * region-scoped.
+ */
+export interface AwsCredentials {
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
+  region: string;
+}
 
 export interface ApiKeyInfo {
   keyId: string;

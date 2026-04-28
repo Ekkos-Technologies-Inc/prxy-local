@@ -1,9 +1,20 @@
 # Modules
 
-prxy-local v0.2.0 ships **eleven built-in modules**. They're composable
+prxy-local v0.3.0 ships **eleven built-in modules** and **five providers**
+(Anthropic, OpenAI, Google, Groq, AWS Bedrock). The modules are composable
 middleware around the LLM provider call: `pre()` runs before, can short-circuit
 the pipeline (cache hit, budget block); `post()` runs after, fire-and-forget
 (cache write, pattern forge, telemetry).
+
+## Providers
+
+| Provider | Model prefix | Notes |
+|----------|--------------|-------|
+| Anthropic | `claude-*` | Direct API |
+| OpenAI | `gpt-*`, `o1`, `o3*`, `o4*` | Direct API |
+| Google | `gemini-*` | Direct API (`@google/genai`) |
+| Groq | `llama-*`, `mixtral-*`, `groq/*` | Direct API (OpenAI-compatible) |
+| AWS Bedrock | `bedrock/<model-id>` | Hosts Claude / Llama / Titan / Mistral / Cohere through your AWS account. Auth: `AWS_REGION` + SDK default credential chain (env, shared config, IAM role). Examples: `bedrock/anthropic.claude-sonnet-4-20250514-v1:0`, `bedrock/meta.llama3-70b-instruct-v1:0`. |
 
 Set the active pipeline with the `PRXY_PIPE` env var (comma-separated module
 names, in order) or per-request with the `x-prxy-pipe` header.
