@@ -3,7 +3,7 @@
  *
  * Local mode usually uses the filesystem-backed `LocalBlob` — that's the right
  * default for laptops, homelab boxes, and single-VPS installs. But when you
- * run prxy-local *on AWS* (e.g. a small EC2 / ECS task / App Runner) and want
+ * run prxy-monster-local *on AWS* (e.g. a small EC2 / ECS task / App Runner) and want
  * blobs to survive instance churn without setting up an EFS mount, point this
  * blob backend at an S3 bucket instead.
  *

@@ -1,5 +1,5 @@
 /**
- * Bedrock provider client (prxy-local edition).
+ * Bedrock provider client (prxy-monster-local edition).
  *
  * Translates between the canonical request/response format and the AWS Bedrock
  * Converse API. Bedrock hosts Claude (Anthropic), Llama (Meta), Titan (Amazon),

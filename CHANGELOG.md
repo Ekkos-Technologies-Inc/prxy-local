@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to prxy-local will be documented here. The format is based
+All notable changes to prxy-monster-local will be documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 follows [Semantic Versioning](https://semver.org/).
 
@@ -93,7 +93,7 @@ go to Bedrock no matter which family they belong to.
 
 ### Roadmap
 
-CDK self-deploy template lives in the cloud monorepo only — prxy-local users
+CDK self-deploy template lives in the cloud monorepo only — prxy-monster-local users
 continue to use `docker run`. If you need a one-command AWS deploy of the
 local edition, the cloud `infra/aws-cdk/` template is a 95% drop-in (swap
 the gateway image + use `BLOB_BACKEND=s3`).
@@ -201,7 +201,7 @@ stripped out, and a new `airgap` module added.
 #### Notes
 
 - `@prxy/module-sdk` is currently inlined under `src/types/`. A future
-  release will publish it to npm so prxy-local and the cloud edition can
+  release will publish it to npm so prxy-monster-local and the cloud edition can
   share the contract.
 - Google + Groq provider clients are stubs that throw. PRs welcome — the
   OpenAI client is a good reference shape. (**Implemented in v0.2.0.**)

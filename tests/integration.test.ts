@@ -67,7 +67,7 @@ beforeAll(async () => {
   // prior test's provider response doesn't get returned by semantic-cache.
   process.env.PRXY_PIPE = 'cost-guard';
 
-  dataDir = await fs.mkdtemp(join(tmpdir(), 'prxy-local-test-'));
+  dataDir = await fs.mkdtemp(join(tmpdir(), 'prxy-monster-local-test-'));
   process.env.PRXY_DATA_DIR = dataDir;
 
   const adapterMod = await import('../src/storage/adapter.js');

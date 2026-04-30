@@ -15,7 +15,7 @@ let adapter: LocalAdapter;
 let dataDir: string;
 
 beforeEach(async () => {
-  dataDir = await fs.mkdtemp(join(tmpdir(), 'prxy-local-parity-'));
+  dataDir = await fs.mkdtemp(join(tmpdir(), 'prxy-monster-local-parity-'));
   adapter = new LocalAdapter({
     dataDir,
     migrationsDir: join(process.cwd(), 'src', 'storage', 'migrations'),

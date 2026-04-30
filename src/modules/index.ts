@@ -1,5 +1,5 @@
 /**
- * Built-in modules shipped with prxy-local.
+ * Built-in modules shipped with prxy-monster-local.
  *
  * v0.4.0 ships 13 modules: airgap, cost-guard, exact-cache, ipc, mcp-optimizer,
  * patterns, semantic-cache, router, prompt-optimizer, tool-cache, guardrails,

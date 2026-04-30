@@ -4,10 +4,10 @@
 # copy `.env.example` to `.env` and fill in the providers you use.
 
 services:
-  prxy-local:
+  prxy-monster-local:
     build: .
     image: prxymonster/local:dev
-    container_name: prxy-local
+    container_name: prxy-monster-local
     restart: unless-stopped
     ports:
       - "3099:3099"

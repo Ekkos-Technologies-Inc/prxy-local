@@ -1,10 +1,10 @@
-# prxy-local
+# prxy-monster-local
 
 > The open-source local edition of [prxy.monster](https://prxy.monster).
 > A composable AI gateway you run on your own hardware. Zero data leaves your machine.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CI](https://github.com/Ekkos-Technologies-Inc/prxy-local/actions/workflows/ci.yml/badge.svg)](https://github.com/Ekkos-Technologies-Inc/prxy-local/actions/workflows/ci.yml)
+[![CI](https://github.com/Ekkos-Technologies-Inc/prxy-monster-local/actions/workflows/ci.yml/badge.svg)](https://github.com/Ekkos-Technologies-Inc/prxy-monster-local/actions/workflows/ci.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/prxymonster/local)](https://hub.docker.com/r/prxymonster/local)
 
 ---
@@ -32,13 +32,13 @@ export ANTHROPIC_BASE_URL=http://localhost:3099
 export ANTHROPIC_API_KEY=sk-ant-xxx   # your real Anthropic key
 ```
 
-Done. Your LLM calls now route through prxy-local.
+Done. Your LLM calls now route through prxy-monster-local.
 
 ## Quick start — from source
 
 ```bash
-git clone https://github.com/Ekkos-Technologies-Inc/prxy-local
-cd prxy-local
+git clone https://github.com/Ekkos-Technologies-Inc/prxy-monster-local
+cd prxy-monster-local
 cp .env.example .env                  # edit and add your provider keys
 npm install
 npm run build
@@ -93,7 +93,7 @@ Nothing else. No telemetry. No phone-home. Audit the source.
 
 ## Authentication
 
-prxy-local is single-user / single-machine by default. Two modes:
+prxy-monster-local is single-user / single-machine by default. Two modes:
 
 - **Open** (default): `LOCAL_API_KEY` is unset. Any caller can hit the gateway.
 - **Bearer**: set `LOCAL_API_KEY=prxy_local_choose_a_long_random_string`.

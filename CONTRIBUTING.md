@@ -1,12 +1,12 @@
-# Contributing to prxy-local
+# Contributing to prxy-monster-local
 
 Thank you for considering a contribution.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/Ekkos-Technologies-Inc/prxy-local
-cd prxy-local
+git clone https://github.com/Ekkos-Technologies-Inc/prxy-monster-local
+cd prxy-monster-local
 cp .env.example .env
 npm install
 npm run build
@@ -19,7 +19,7 @@ The local gateway runs on `:3099`.
 ## Code structure
 
 ```
-prxy-local/
+prxy-monster-local/
 ├── src/
 │   ├── server.ts             # Express entrypoint
 │   ├── app.ts                # Express factory (so tests can mount it)

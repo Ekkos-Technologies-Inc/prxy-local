@@ -1,5 +1,5 @@
 /**
- * prxy-local gateway entry point.
+ * prxy-monster-local gateway entry point.
  *
  * Spins up the Express app, initializes the SQLite storage adapter, runs the
  * `init()` hook of every module in the active pipeline (so things like
@@ -61,7 +61,7 @@ async function main(): Promise<void> {
           groq: Boolean(process.env.GROQ_API_KEY),
         },
       },
-      `prxy-local listening on http://${HOST}:${PORT}`,
+      `prxy-monster-local listening on http://${HOST}:${PORT}`,
     );
   });
 

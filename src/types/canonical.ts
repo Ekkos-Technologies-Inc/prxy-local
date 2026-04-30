@@ -89,12 +89,12 @@ export interface AwsCredentials {
 export interface ApiKeyInfo {
   keyId: string;
   userId: string;
-  /** Always 'local' in prxy-local. Kept on the type so modules written for
+  /** Always 'local' in prxy-monster-local. Kept on the type so modules written for
    *  the cloud edition compile without changes. */
   tier: 'local' | 'free' | 'pro' | 'team' | 'enterprise';
   pipelineConfig?: string;
   revoked: boolean;
-  /** The user's actual provider API key (BYOK mode). Not used in prxy-local —
+  /** The user's actual provider API key (BYOK mode). Not used in prxy-monster-local —
    *  provider keys come from process.env. */
   providerKey?: string;
 }

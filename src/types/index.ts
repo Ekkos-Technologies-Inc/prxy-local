@@ -1,5 +1,5 @@
 /**
- * Public type surface for prxy-local.
+ * Public type surface for prxy-monster-local.
  *
  * Re-exports the canonical request/response shapes plus the Module + Storage
  * SDK interfaces. Modules in this repo import from here directly. Future plan

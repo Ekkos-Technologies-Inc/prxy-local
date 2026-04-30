@@ -1,6 +1,6 @@
 # Modules
 
-prxy-local v0.4.0 ships **thirteen built-in modules** and **five providers**
+prxy-monster-local v0.4.0 ships **thirteen built-in modules** and **five providers**
 (Anthropic, OpenAI, Google, Groq, AWS Bedrock). The modules are composable
 middleware around the LLM provider call: `pre()` runs before, can short-circuit
 the pipeline (cache hit, budget block); `post()` runs after, fire-and-forget

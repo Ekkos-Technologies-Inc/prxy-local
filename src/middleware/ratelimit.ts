@@ -1,5 +1,5 @@
 /**
- * Rate limiting — no-op in prxy-local.
+ * Rate limiting — no-op in prxy-monster-local.
  *
  * Local mode is single-user / single-machine; tier-based rate limits are a
  * cloud-only concern. This middleware is here so the pipeline shape matches

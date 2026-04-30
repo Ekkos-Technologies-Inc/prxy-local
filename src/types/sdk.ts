@@ -56,7 +56,7 @@ export interface Logger {
 
 /**
  * StorageAdapter — modules access KV, DB, and blob via this interface. In
- * prxy-local everything is backed by SQLite + filesystem + an in-memory KV.
+ * prxy-monster-local everything is backed by SQLite + filesystem + an in-memory KV.
  */
 export interface StorageAdapter {
   kind: 'cloud' | 'local';

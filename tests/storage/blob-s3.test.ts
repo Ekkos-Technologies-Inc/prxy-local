@@ -1,5 +1,5 @@
 /**
- * Parity tests for the prxy-local S3 blob backend.
+ * Parity tests for the prxy-monster-local S3 blob backend.
  *
  * Asserts BlobS3 implements the same BlobStore contract as LocalBlob
  * (filesystem) using only mocked S3 calls. Useful for "local-mode-on-AWS"

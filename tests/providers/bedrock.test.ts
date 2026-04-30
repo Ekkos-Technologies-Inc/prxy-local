@@ -1,5 +1,5 @@
 /**
- * Tests for the Bedrock provider client (prxy-local edition).
+ * Tests for the Bedrock provider client (prxy-monster-local edition).
  *
  * Asserts the canonical ↔ Converse API translation, streaming, error paths,
  * credential parsing, and that `detectProvider` routes `bedrock/*` model names

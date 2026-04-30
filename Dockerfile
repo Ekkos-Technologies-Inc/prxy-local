@@ -1,4 +1,4 @@
-# prxy-local — single-image Docker build
+# prxy-monster-local — single-image Docker build
 # Usage:
 #   docker build -t prxymonster/local .
 #   docker run -p 3099:3099 -v ~/.prxy:/data \
